@@ -174,7 +174,7 @@ rcl_client_init(
  * Lock-Free          | Yes
  *
  * \param[inout] client handle to the client to be finalized
- * \param[in] node handle to the node used to create the client
+ * \param[in] node a valid (not finalized) handle to the node used to create the client
  * \return `RCL_RET_OK` if client was finalized successfully, or
  * \return `RCL_RET_INVALID_ARGUMENT` if any arguments are invalid, or
  * \return `RCL_RET_NODE_INVALID` if the node is invalid, or
@@ -285,10 +285,20 @@ rcl_send_request(const rcl_client_t * client, const void * ros_request, int64_t 
 RCL_PUBLIC
 RCL_WARN_UNUSED
 rcl_ret_t
+rcl_take_response_with_info(
+  const rcl_client_t * client,
+  rmw_service_info_t * request_header,
+  void * ros_response);
+
+/// backwards compatibility function that takes a rmw_request_id_t only
+RCL_PUBLIC
+RCL_WARN_UNUSED
+rcl_ret_t
 rcl_take_response(
   const rcl_client_t * client,
   rmw_request_id_t * request_header,
   void * ros_response);
+
 
 /// Get the name of the service that this client will request a response from.
 /**
