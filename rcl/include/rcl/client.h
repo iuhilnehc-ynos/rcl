@@ -246,7 +246,6 @@ RCL_WARN_UNUSED
 rcl_ret_t
 rcl_send_request(const rcl_client_t * client, const void * ros_request, int64_t * sequence_number);
 
-
 /// Take a ROS response using a client
 /**
  * It is the job of the caller to ensure that the type of the `ros_response`
@@ -255,8 +254,8 @@ rcl_send_request(const rcl_client_t * client, const void * ros_request, int64_t 
  * Passing a different type to take_response produces undefined behavior and
  * cannot be checked by this function and therefore no deliberate error will
  * occur.
- * The request_header is an rmw struct for meta-information about the request
- * sent (e.g. the sequence number).
+ * The service_info is an rmw struct for meta-information about the request
+ * sent (e.g. the sequence number and timestamps).
  * The caller must provide a pointer to an allocated struct.
  * This function will populate the struct's fields.
  * `ros_response` should point to an already allocated ROS response message
@@ -273,7 +272,8 @@ rcl_send_request(const rcl_client_t * client, const void * ros_request, int64_t 
  * <i>[1] only if required when filling the message, avoided for fixed sizes</i>
  *
  * \param[in] client handle to the client which will take the response
- * \param[inout] request_header pointer to the request header
+ * \param[inout] service_info pointer to the service info, which contains
+ *   timestamps and the request header
  * \param[inout] ros_response type-erased pointer to the ROS response message
  * \return `RCL_RET_OK` if the response was taken successfully, or
  * \return `RCL_RET_INVALID_ARGUMENT` if any arguments are invalid, or
@@ -287,7 +287,7 @@ RCL_WARN_UNUSED
 rcl_ret_t
 rcl_take_response_with_info(
   const rcl_client_t * client,
-  rmw_service_info_t * request_header,
+  rmw_service_info_t * service_info,
   void * ros_response);
 
 /// backwards compatibility function that takes a rmw_request_id_t only
@@ -298,7 +298,6 @@ rcl_take_response(
   const rcl_client_t * client,
   rmw_request_id_t * request_header,
   void * ros_response);
-
 
 /// Get the name of the service that this client will request a response from.
 /**

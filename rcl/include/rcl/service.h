@@ -219,8 +219,8 @@ rcl_service_get_default_options(void);
  * be allocated for a dynamically sized array in the target message, then the
  * allocator given in the service options is used.
  *
- * request_header is a pointer to pre-allocated a rmw struct containing
- * meta-information about the request (e.g. the sequence number).
+ * service_info is a pointer to pre-allocated a rmw struct containing
+ * meta-information about the request (e.g. the sequence number and timestamps).
  *
  * <hr>
  * Attribute          | Adherence
@@ -232,7 +232,7 @@ rcl_service_get_default_options(void);
  * <i>[1] only if required when filling the request, avoided for fixed sizes</i>
  *
  * \param[in] service the handle to the service from which to take
- * \param[inout] request_header ptr to the struct holding metadata about the request
+ * \param[inout] service_info ptr to the struct holding metadata about the request
  * \param[inout] ros_request type-erased ptr to an allocated ROS request message
  * \return `RCL_RET_OK` if the request was taken, or
  * \return `RCL_RET_INVALID_ARGUMENT` if any arguments are invalid, or
@@ -247,7 +247,7 @@ RCL_WARN_UNUSED
 rcl_ret_t
 rcl_take_request_with_info(
   const rcl_service_t * service,
-  rmw_service_info_t * request_header,
+  rmw_service_info_t * service_info,
   void * ros_request);
 
 /// backwards compatibility version that takes a request_id only
@@ -258,7 +258,6 @@ rcl_take_request(
   const rcl_service_t * service,
   rmw_request_id_t * request_header,
   void * ros_request);
-
 
 /// Send a ROS response to a client using a service.
 /**

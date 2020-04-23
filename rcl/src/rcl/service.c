@@ -278,21 +278,21 @@ rcl_service_get_rmw_handle(const rcl_service_t * service)
 rcl_ret_t
 rcl_take_request_with_info(
   const rcl_service_t * service,
-  rmw_service_info_t * request_header,
+  rmw_service_info_t * service_info,
   void * ros_request)
 {
   RCUTILS_LOG_DEBUG_NAMED(ROS_PACKAGE_NAME, "Service server taking service request");
   if (!rcl_service_is_valid(service)) {
     return RCL_RET_SERVICE_INVALID;  // error already set
   }
-  RCL_CHECK_ARGUMENT_FOR_NULL(request_header, RCL_RET_INVALID_ARGUMENT);
+  RCL_CHECK_ARGUMENT_FOR_NULL(service_info, RCL_RET_INVALID_ARGUMENT);
   RCL_CHECK_ARGUMENT_FOR_NULL(ros_request, RCL_RET_INVALID_ARGUMENT);
   const rcl_service_options_t * options = rcl_service_get_options(service);
   RCL_CHECK_FOR_NULL_WITH_MSG(options, "Failed to get service options", return RCL_RET_ERROR);
 
   bool taken = false;
   rmw_ret_t ret = rmw_take_request(
-    service->impl->rmw_handle, request_header, ros_request, &taken);
+    service->impl->rmw_handle, service_info, ros_request, &taken);
   if (RMW_RET_OK != ret) {
     RCL_SET_ERROR_MSG(rmw_get_error_string().str);
     if (RMW_RET_BAD_ALLOC == ret) {
@@ -314,7 +314,9 @@ rcl_take_request(
   rmw_request_id_t * request_header,
   void * ros_request)
 {
-  rmw_service_info_t header;
+  RCL_CHECK_ARGUMENT_FOR_NULL(request_header, RCL_RET_INVALID_ARGUMENT);
+
+  rmw_service_info_t header = rmw_get_zero_initialized_service_info();
   header.request_id = *request_header;
   rcl_ret_t ret = rcl_take_request_with_info(service, &header, ros_request);
   *request_header = header.request_id;

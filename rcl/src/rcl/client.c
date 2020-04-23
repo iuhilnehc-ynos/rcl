@@ -291,7 +291,7 @@ rcl_send_request(const rcl_client_t * client, const void * ros_request, int64_t 
 rcl_ret_t
 rcl_take_response_with_info(
   const rcl_client_t * client,
-  rmw_service_info_t * request_header,
+  rmw_service_info_t * service_info,
   void * ros_response)
 {
   RCUTILS_LOG_DEBUG_NAMED(ROS_PACKAGE_NAME, "Client taking service response");
@@ -299,12 +299,12 @@ rcl_take_response_with_info(
     return RCL_RET_CLIENT_INVALID;  // error already set
   }
 
-  RCL_CHECK_ARGUMENT_FOR_NULL(request_header, RCL_RET_INVALID_ARGUMENT);
+  RCL_CHECK_ARGUMENT_FOR_NULL(service_info, RCL_RET_INVALID_ARGUMENT);
   RCL_CHECK_ARGUMENT_FOR_NULL(ros_response, RCL_RET_INVALID_ARGUMENT);
 
   bool taken = false;
   if (rmw_take_response(
-      client->impl->rmw_handle, request_header, ros_response, &taken) != RMW_RET_OK)
+      client->impl->rmw_handle, service_info, ros_response, &taken) != RMW_RET_OK)
   {
     RCL_SET_ERROR_MSG(rmw_get_error_string().str);
     return RCL_RET_ERROR;
@@ -323,7 +323,9 @@ rcl_take_response(
   rmw_request_id_t * request_header,
   void * ros_response)
 {
-  rmw_service_info_t header;
+  RCL_CHECK_ARGUMENT_FOR_NULL(request_header, RCL_RET_INVALID_ARGUMENT);
+
+  rmw_service_info_t header = rmw_get_zero_initialized_service_info();
   header.request_id = *request_header;
   rcl_ret_t ret = rcl_take_response_with_info(client, &header, ros_response);
   *request_header = header.request_id;
