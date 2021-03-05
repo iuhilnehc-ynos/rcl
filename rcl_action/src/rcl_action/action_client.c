@@ -32,6 +32,7 @@ extern "C"
 #include "rcl/types.h"
 #include "rcl/wait.h"
 
+#include "rcutils/format_string.h"
 #include "rcutils/logging_macros.h"
 #include "rcutils/strdup.h"
 
@@ -135,7 +136,7 @@ _rcl_action_client_fini_impl(
   }
 
 // \internal Initializes an action client specific topic subscription.
-#define SUBSCRIPTION_INIT(Type) \
+#define SUBSCRIPTION_INIT_OPTION(Type, Filter) \
   char * Type ## _topic_name = NULL; \
   ret = rcl_action_get_ ## Type ## _topic_name(action_name, allocator, &Type ## _topic_name); \
   if (RCL_RET_OK != ret) { \
@@ -152,6 +153,14 @@ _rcl_action_client_fini_impl(
     rcl_subscription_get_default_options(); \
   Type ## _topic_subscription_options.qos = options->Type ## _topic_qos; \
   Type ## _topic_subscription_options.allocator = allocator; \
+  if (NULL != Filter) { \
+    char * expression = \
+      rcutils_strdup(Filter, allocator); \
+    if (!expression) { \
+      goto fail; \
+    } \
+    Type ## _topic_subscription_options.rmw_subscription_options.filter_expression = expression; \
+  } \
   action_client->impl->Type ## _subscription = rcl_get_zero_initialized_subscription(); \
   ret = rcl_subscription_init( \
     &action_client->impl->Type ## _subscription, \
@@ -170,6 +179,9 @@ _rcl_action_client_fini_impl(
     } \
     goto fail; \
   }
+
+#define SUBSCRIPTION_INIT(Type) \
+  SUBSCRIPTION_INIT_OPTION(Type, NULL)
 
 rcl_ret_t
 rcl_action_client_init(
@@ -191,6 +203,7 @@ rcl_action_client_init(
 
   rcl_ret_t ret = RCL_RET_OK;
   rcl_ret_t fini_ret = RCL_RET_OK;
+  char * filter_feedback = NULL;
   RCUTILS_LOG_DEBUG_NAMED(
     ROS_PACKAGE_NAME, "Initializing client for action name '%s'", action_name);
   if (NULL != action_client->impl) {
@@ -219,7 +232,15 @@ rcl_action_client_init(
   CLIENT_INIT(result);
 
   // Initialize action topic subscriptions.
-  SUBSCRIPTION_INIT(feedback);
+  filter_feedback =
+    rcutils_format_string(allocator, "node.data MATCH '%s'",
+    rcl_node_get_fully_qualified_name(node));
+  if (!filter_feedback) {
+    RCL_SET_ERROR_MSG("failed to allocate memory for output topic");
+    goto fail;
+  }
+  SUBSCRIPTION_INIT_OPTION(feedback, filter_feedback);
+  allocator.deallocate(filter_feedback, allocator.state);
   SUBSCRIPTION_INIT(status);
 
   RCUTILS_LOG_DEBUG_NAMED(ROS_PACKAGE_NAME, "Action client initialized");
